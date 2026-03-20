@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f0f1a">
+<title>🐱 Jurnal Oscar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f1a;
+    --surface: #1a1a2e;
+    --card: #16213e;
+    --accent: #e8c97a;
+    --accent2: #f0a070;
+    --text: #e8e4d9;
+    --muted: #8a8a9a;
+    --ok: #6bcb77;
+    --warn: #ff6b6b;
+    --border: rgba(232,201,122,0.15);
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at 20% 20%, rgba(232,201,122,0.04) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 80%, rgba(240,160,112,0.04) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .container { max-width: 720px; margin: 0 auto; padding: 24px 16px 80px; position: relative; z-index: 1; }
+  header { text-align: center; padding: 40px 0 32px; }
+  .cat-icon { font-size: 48px; display: block; margin-bottom: 12px; filter: drop-shadow(0 0 20px rgba(232,201,122,0.4)); }
+  h1 { font-family: 'DM Serif Display', serif; font-size: 2rem; color: var(--accent); letter-spacing: -0.02em; }
+  h1 em { font-style: italic; color: var(--accent2); }
+  .subtitle { font-size: 0.85rem; color: var(--muted); margin-top: 6px; font-weight: 300; }
+
+  /* Sync indicator */
+  .sync-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 100px;
+    font-size: 0.78rem;
+    margin: 0 auto 24px;
+    width: fit-content;
+    transition: all 0.3s;
+  }
+  .sync-bar.online { background: rgba(107,203,119,0.12); color: var(--ok); border: 1px solid rgba(107,203,119,0.2); }
+  .sync-bar.offline { background: rgba(255,107,107,0.12); color: var(--warn); border: 1px solid rgba(255,107,107,0.2); }
+  .sync-bar.syncing { background: rgba(232,201,122,0.12); color: var(--accent); border: 1px solid rgba(232,201,122,0.2); }
+  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .sync-dot.pulse { animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 8px; margin-bottom: 24px; background: var(--surface); border-radius: 12px; padding: 4px; }
+  .tab { flex: 1; padding: 10px; border: none; border-radius: 9px; background: transparent; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+  .tab.active { background: var(--card); color: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+
+  /* Form */
+  .form-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 24px; }
+  .form-title { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--accent); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+  .field { margin-bottom: 18px; }
+  label { display: block; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 7px; }
+  input[type="date"], input[type="time"], input[type="text"], select, textarea {
+    width: 100%; background: var(--surface); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 11px 14px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 0.9rem; transition: border-color 0.2s; appearance: none;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(232,201,122,0.1); }
+  textarea { resize: vertical; min-height: 80px; }
+
+  /* Pills */
+  .pill-group { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill { padding: 7px 14px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.1); background: var(--surface); color: var(--muted); font-size: 0.82rem; cursor: pointer; transition: all 0.18s; user-select: none; }
+  .pill:hover { border-color: var(--accent); color: var(--accent); }
+  .pill.selected { background: rgba(232,201,122,0.12); border-color: var(--accent); color: var(--accent); font-weight: 500; }
+  .pill.danger.selected { background: rgba(255,107,107,0.12); border-color: var(--warn); color: var(--warn); }
+
+  /* Toggle */
+  .toggle-row { display: flex; align-items: center; gap: 14px; }
+  .toggle { width: 46px; height: 26px; background: var(--surface); border-radius: 100px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
+  .toggle::after { content: ''; width: 18px; height: 18px; border-radius: 50%; background: var(--muted); position: absolute; top: 3px; left: 3px; transition: all 0.2s; }
+  .toggle.on { background: rgba(255,107,107,0.25); border-color: var(--warn); }
+  .toggle.on::after { background: var(--warn); left: 23px; }
+  .toggle-label { font-size: 0.88rem; color: var(--muted); }
+  .toggle.on + .toggle-label { color: var(--warn); }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* Submit */
+  .btn-submit { width: 100%; padding: 14px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 12px; color: #1a1a2e; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s, transform 0.1s; margin-top: 4px; }
+  .btn-submit:hover { opacity: 0.9; }
+  .btn-submit:active { transform: scale(0.98); }
+  .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--ok); color: #0f1a0f; padding: 12px 24px; border-radius: 100px; font-weight: 600; font-size: 0.85rem; z-index: 100; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); white-space: nowrap; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Entries */
+  .journal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .journal-title { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--accent); }
+  .entry-count { font-size: 0.78rem; color: var(--muted); background: var(--surface); padding: 4px 10px; border-radius: 100px; }
+
+  .entry-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 12px; position: relative; transition: border-color 0.2s; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .entry-card:hover { border-color: rgba(232,201,122,0.3); }
+  .entry-card.has-blood { border-left: 3px solid var(--warn); }
+  .entry-card.no-defecation { opacity: 0.7; }
+
+  .entry-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .entry-date { font-family: 'DM Serif Display', serif; font-size: 1rem; color: var(--accent); }
+  .entry-time { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+
+  .status-badge { padding: 4px 10px; border-radius: 100px; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .status-yes { background: rgba(107,203,119,0.15); color: var(--ok); }
+  .status-no { background: rgba(255,107,107,0.12); color: var(--warn); }
+
+  .entry-details { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .detail-chip { font-size: 0.75rem; padding: 3px 9px; border-radius: 6px; background: var(--surface); color: var(--muted); }
+  .detail-chip.alert { background: rgba(255,107,107,0.1); color: var(--warn); }
+  .entry-obs { font-size: 0.82rem; color: var(--muted); font-style: italic; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; margin-top: 4px; }
+
+  .btn-delete { position: absolute; top: 14px; right: 14px; background: none; border: none; color: rgba(255,255,255,0.15); cursor: pointer; font-size: 16px; padding: 4px; border-radius: 6px; transition: color 0.2s, background 0.2s; }
+  .btn-delete:hover { color: var(--warn); background: rgba(255,107,107,0.1); }
+
+  .empty-state { text-align: center; padding: 48px 24px; color: var(--muted); }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; display: block; opacity: 0.4; }
+
+  /* Loading skeleton */
+  .skeleton { background: linear-gradient(90deg, var(--card) 25%, var(--surface) 50%, var(--card) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: var(--radius); height: 100px; margin-bottom: 12px; }
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+  /* Export */
+  .export-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+  .btn-export { flex: 1; padding: 11px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--accent); font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+  .btn-export:hover { background: rgba(232,201,122,0.08); }
+
+  /* Filter */
+  .filter-row { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 2px; }
+  .filter-btn { padding: 6px 14px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.08); background: var(--surface); color: var(--muted); font-size: 0.78rem; cursor: pointer; white-space: nowrap; transition: all 0.18s; }
+  .filter-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(232,201,122,0.08); }
+
+  /* Stats */
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+  .stat-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; text-align: center; }
+  .stat-val { font-family: 'DM Serif Display', serif; font-size: 1.6rem; color: var(--accent); display: block; }
+  .stat-lbl { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  @media (max-width: 480px) {
+    .field-row { grid-template-columns: 1fr; }
+    h1 { font-size: 1.6rem; }
+    .export-bar { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <span class="cat-icon">🐾</span>
+    <h1>Jurnal <em>Oscar</em></h1>
+    <p class="subtitle">Sănătate & bunăstare • Sincronizat în cloud ☁️</p>
+  </header>
+
+  <div class="sync-bar syncing" id="sync-bar">
+    <div class="sync-dot pulse"></div>
+    <span id="sync-text">Se conectează...</span>
+    <button onclick="loadEntries()" style="background:none;border:none;color:inherit;cursor:pointer;font-size:14px;padding:0 0 0 6px;" title="Reîncarcă">🔄</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('form', this)">➕ Adaugă</button>
+    <button class="tab" onclick="switchTab('journal', this)">📋 Jurnal</button>
+    <button class="tab" onclick="switchTab('stats', this)">📊 Statistici</button>
+  </div>
+
+  <!-- FORM TAB -->
+  <div class="section active" id="tab-form">
+    <div class="form-card">
+      <div class="form-title">🐱 Înregistrare nouă</div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Data</label>
+          <input type="date" id="f-date">
+        </div>
+        <div class="field">
+          <label>Ora (opțional)</label>
+          <input type="time" id="f-time">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>A defeca? *</label>
+        <div class="pill-group">
+          <div class="pill selected" data-group="defecation" data-val="da" onclick="selectPill(this)">✅ Da</div>
+          <div class="pill" data-group="defecation" data-val="nu" onclick="selectPill(this)">❌ Nu</div>
+          <div class="pill" data-group="defecation" data-val="partial" onclick="selectPill(this)">⚠️ Parțial</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Consistență</label>
+        <div class="pill-group">
+          <div class="pill" data-group="consistency" data-val="normal" onclick="selectPill(this)">Normal</div>
+          <div class="pill" data-group="consistency" data-val="moale" onclick="selectPill(this)">Moale</div>
+          <div class="pill" data-group="consistency" data-val="lichid" onclick="selectPill(this)">Lichid / Diaree</div>
+          <div class="pill" data-group="consistency" data-val="dur" onclick="selectPill(this)">Dur / Uscat</div>
+          <div class="pill" data-group="consistency" data-val="mucos" onclick="selectPill(this)">Mucos</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Culoare</label>
+        <div class="pill-group">
+          <div class="pill" data-group="color" data-val="maro-normal" onclick="selectPill(this)">🟫 Maro normal</div>
+          <div class="pill" data-group="color" data-val="maro-deschis" onclick="selectPill(this)">Maro deschis</div>
+          <div class="pill" data-group="color" data-val="maro-inchis" onclick="selectPill(this)">Maro închis</div>
+          <div class="pill" data-group="color" data-val="negru" onclick="selectPill(this)">⚫ Negru</div>
+          <div class="pill" data-group="color" data-val="verde" onclick="selectPill(this)">🟢 Verde</div>
+          <div class="pill" data-group="color" data-val="galben" onclick="selectPill(this)">Galben</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Miros</label>
+        <div class="pill-group">
+          <div class="pill" data-group="smell" data-val="normal" onclick="selectPill(this)">Normal</div>
+          <div class="pill" data-group="smell" data-val="puternic" onclick="selectPill(this)">⚡ Puternic</div>
+          <div class="pill" data-group="smell" data-val="foarte-puternic" onclick="selectPill(this)">💀 Foarte puternic</div>
+          <div class="pill" data-group="smell" data-val="acru" onclick="selectPill(this)">Acru</div>
+          <div class="pill" data-group="smell" data-val="fara-miros" onclick="selectPill(this)">Fără miros</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Cantitate</label>
+        <div class="pill-group">
+          <div class="pill" data-group="amount" data-val="mica" onclick="selectPill(this)">Mică</div>
+          <div class="pill" data-group="amount" data-val="normala" onclick="selectPill(this)">Normală</div>
+          <div class="pill" data-group="amount" data-val="mare" onclick="selectPill(this)">Mare</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Sânge vizibil?</label>
+        <div class="toggle-row">
+          <div class="toggle" id="blood-toggle" onclick="toggleBlood()"></div>
+          <span class="toggle-label" id="blood-label">Nu</span>
+        </div>
+      </div>
+
+      <div class="field" id="blood-detail-field" style="display:none">
+        <label>Tip sânge</label>
+        <div class="pill-group">
+          <div class="pill danger" data-group="blood_type" data-val="rosu-proaspat" onclick="selectPill(this)">🔴 Roșu proaspăt</div>
+          <div class="pill danger" data-group="blood_type" data-val="inchis" onclick="selectPill(this)">🔴 Închis / Digerat</div>
+          <div class="pill danger" data-group="blood_type" data-val="urme" onclick="selectPill(this)">Urme mici</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Comportament în litieră</label>
+        <div class="pill-group">
+          <div class="pill" data-group="behavior" data-val="normal" onclick="selectPill(this)">Normal</div>
+          <div class="pill" data-group="behavior" data-val="efort" onclick="selectPill(this)">Efort vizibil</div>
+          <div class="pill" data-group="behavior" data-val="tipete" onclick="selectPill(this)">Tipete / durere</div>
+          <div class="pill" data-group="behavior" data-val="evitat" onclick="selectPill(this)">Evitat litiera</div>
+          <div class="pill" data-group="behavior" data-val="mult-timp" onclick="selectPill(this)">Mult timp în litieră</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Observații libere</label>
+        <textarea id="f-obs" placeholder="ex: a mâncat mai puțin ieri, a vomitat dimineața..."></textarea>
+      </div>
+
+      <button class="btn-submit" id="btn-save" onclick="saveEntry()">☁️ Salvează în cloud</button>
+    </div>
+  </div>
+
+  <!-- JOURNAL TAB -->
+  <div class="section" id="tab-journal">
+    <div class="export-bar">
+      <button class="btn-export" onclick="exportCSV()">📥 Export CSV</button>
+      <button class="btn-export" onclick="exportText()">📄 Export Text</button>
+    </div>
+    <div class="filter-row">
+      <button class="filter-btn active" onclick="setFilter('all', this)">Toate</button>
+      <button class="filter-btn" onclick="setFilter('da', this)">✅ Cu defecație</button>
+      <button class="filter-btn" onclick="setFilter('nu', this)">❌ Fără</button>
+      <button class="filter-btn" onclick="setFilter('blood', this)">🩸 Cu sânge</button>
+      <button class="filter-btn" onclick="setFilter('concern', this)">⚠️ Îngrijorător</button>
+    </div>
+    <div id="entries-list">
+      <div class="skeleton"></div>
+      <div class="skeleton" style="height:80px;opacity:0.6"></div>
+      <div class="skeleton" style="height:80px;opacity:0.3"></div>
+    </div>
+  </div>
+
+  <!-- STATS TAB -->
+  <div class="section" id="tab-stats">
+    <div class="stats-grid">
+      <div class="stat-box"><span class="stat-val" id="s-total">—</span><span class="stat-lbl">Înregistrări</span></div>
+      <div class="stat-box"><span class="stat-val" id="s-defec">—</span><span class="stat-lbl">Rată defecație</span></div>
+      <div class="stat-box"><span class="stat-val" id="s-blood">—</span><span class="stat-lbl">Cu sânge</span></div>
+    </div>
+    <div class="form-card">
+      <div class="form-title">📊 Rezumat</div>
+      <div id="stats-content" style="color:var(--muted);font-size:0.88rem;line-height:1.9;"></div>
+    </div>
+    <div class="form-card" style="margin-top:16px;">
+      <div class="form-title">⚠️ Zona de pericol</div>
+      <p style="font-size:0.78rem;color:var(--muted);margin-bottom:12px;">Șterge toate înregistrările din cloud. Acțiune ireversibilă!</p>
+      <button onclick="clearAll()" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--warn);background:rgba(255,107,107,0.08);color:var(--warn);font-family:DM Sans;font-size:0.85rem;cursor:pointer;">🗑️ Șterge toate înregistrările</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, collection, addDoc, deleteDoc, doc, query, orderBy, serverTimestamp, writeBatch, getDocs }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDELEVVKHHa9lzbTKjSbnqEVFbVshrz9wg",
+  authDomain: "jurnal-oscar-caca.firebaseapp.com",
+  projectId: "jurnal-oscar-caca",
+  storageBucket: "jurnal-oscar-caca.firebasestorage.app",
+  messagingSenderId: "280481861502",
+  appId: "1:280481861502:web:f08a142a99f460771cad2f"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const colRef = collection(db, 'entries');
+
+// ---- State ----
+let entries = [];
+let activeFilter = 'all';
+let bloodOn = false;
+const selections = { defecation: 'da' };
+
+// ---- Sync bar ----
+function setSyncStatus(status, text) {
+  const bar = document.getElementById('sync-bar');
+  const dot = bar.querySelector('.sync-dot');
+  const txt = document.getElementById('sync-text');
+  bar.className = 'sync-bar ' + status;
+  dot.className = 'sync-dot' + (status === 'syncing' ? ' pulse' : '');
+  txt.textContent = text;
+}
+
+// ---- Load entries ----
+async function loadEntries() {
+  setSyncStatus('syncing', '⏳ Se încarcă...');
+  try {
+    const q = query(colRef, orderBy('created', 'desc'));
+    const snapshot = await getDocs(q);
+    entries = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    setSyncStatus('online', '🟢 Sincronizat — ' + entries.length + ' înregistrări');
+    renderEntries();
+    renderStats();
+  } catch(err) {
+    console.error(err);
+    setSyncStatus('offline', '🔴 Eroare conexiune — apasă 🔄 pentru retry');
+  }
+}
+loadEntries();
+
+window.loadEntries = loadEntries;
+
+// ---- Init form ----
+setToday();
+loadEntries();
+
+function setToday() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  document.getElementById('f-date').value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+// ---- Save ----
+window.saveEntry = async function() {
+  const date = document.getElementById('f-date').value;
+  if (!date) { showToast('Alege o dată!', false); return; }
+  if (!selections.defecation) { showToast('Marchează dacă a defeca!', false); return; }
+
+  const btn = document.getElementById('btn-save');
+  btn.disabled = true;
+  btn.textContent = '⏳ Se salvează...';
+  setSyncStatus('syncing', '⏳ Se salvează...');
+
+  const entry = {
+    date,
+    time: document.getElementById('f-time').value || null,
+    defecation: selections.defecation,
+    consistency: selections.consistency || null,
+    color: selections.color || null,
+    smell: selections.smell || null,
+    amount: selections.amount || null,
+    blood: bloodOn,
+    blood_type: bloodOn ? (selections.blood_type || null) : null,
+    behavior: selections.behavior || null,
+    obs: document.getElementById('f-obs').value.trim() || null,
+    created: serverTimestamp()
+  };
+
+  try {
+    await addDoc(colRef, entry);
+    resetForm();
+    showToast('✅ Salvat în cloud!', true);
+    loadEntries();
+  } catch(e) {
+    console.error(e);
+    showToast('❌ Eroare la salvare', false);
+    setSyncStatus('offline', '🔴 Eroare la salvare');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '☁️ Salvează în cloud';
+  }
+};
+
+function resetForm() {
+  setToday();
+  document.getElementById('f-time').value = '';
+  document.getElementById('f-obs').value = '';
+  Object.keys(selections).forEach(k => delete selections[k]);
+  selections.defecation = 'da';
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('selected'));
+  document.querySelector('[data-val="da"]').classList.add('selected');
+  bloodOn = false;
+  document.getElementById('blood-toggle').classList.remove('on');
+  document.getElementById('blood-label').textContent = 'Nu';
+  document.getElementById('blood-detail-field').style.display = 'none';
+}
+
+// ---- Delete ----
+window.deleteEntry = async function(id) {
+  if (!confirm('Ștergi această înregistrare?')) return;
+  try {
+    await deleteDoc(doc(db, 'entries', id));
+    showToast('Șters!', true);
+    loadEntries();
+  } catch(e) {
+    showToast('Eroare la ștergere', false);
+  }
+};
+
+// ---- Clear all ----
+window.clearAll = async function() {
+  if (!confirm('Ești sigur? Toate datele vor fi șterse din cloud, pentru toți!')) return;
+  try {
+    const snap = await getDocs(colRef);
+    const batch = writeBatch(db);
+    snap.docs.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+    showToast('Date șterse.', true);
+    loadEntries();
+  } catch(e) {
+    showToast('Eroare!', false);
+  }
+};
+
+// ---- Render entries ----
+function renderEntries() {
+  const list = document.getElementById('entries-list');
+  let filtered = [...entries];
+
+  if (activeFilter === 'da') filtered = filtered.filter(e => e.defecation === 'da' || e.defecation === 'partial');
+  else if (activeFilter === 'nu') filtered = filtered.filter(e => e.defecation === 'nu');
+  else if (activeFilter === 'blood') filtered = filtered.filter(e => e.blood);
+  else if (activeFilter === 'concern') filtered = filtered.filter(e =>
+    e.blood || e.defecation === 'nu' || e.consistency === 'lichid' ||
+    e.color === 'negru' || e.behavior === 'tipete' || e.smell === 'foarte-puternic'
+  );
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty-state"><span class="empty-icon">📭</span><p>Nicio înregistrare găsită.</p></div>`;
+    return;
+  }
+
+  list.innerHTML = '';
+  const hdr = document.createElement('div');
+  hdr.className = 'journal-header';
+  hdr.innerHTML = `<span class="journal-title">📋 Înregistrări</span><span class="entry-count">${filtered.length}</span>`;
+  list.appendChild(hdr);
+
+  filtered.forEach(e => {
+    const card = document.createElement('div');
+    card.className = 'entry-card' + (e.blood ? ' has-blood' : '') + (e.defecation === 'nu' ? ' no-defecation' : '');
+
+    const dateDisplay = new Date(e.date + 'T12:00:00').toLocaleDateString('ro-RO', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+    const badgeCls = e.defecation === 'da' ? 'status-yes' : e.defecation === 'partial' ? 'status-yes' : 'status-no';
+    const badgeText = e.defecation === 'da' ? '✅ A defeca' : e.defecation === 'partial' ? '⚠️ Parțial' : '❌ Nu a defeca';
+
+    let chips = '';
+    if (e.consistency) chips += `<span class="detail-chip">🧱 ${e.consistency}</span>`;
+    if (e.color) chips += `<span class="detail-chip">🎨 ${e.color}</span>`;
+    if (e.smell) chips += `<span class="detail-chip">👃 ${e.smell}</span>`;
+    if (e.amount) chips += `<span class="detail-chip">📏 ${e.amount}</span>`;
+    if (e.behavior) chips += `<span class="detail-chip">🐾 ${e.behavior}</span>`;
+    if (e.blood) chips += `<span class="detail-chip alert">🩸 Sânge${e.blood_type ? ' — '+e.blood_type : ''}</span>`;
+
+    card.innerHTML = `
+      <button class="btn-delete" onclick="deleteEntry('${e.id}')">✕</button>
+      <div class="entry-top">
+        <div>
+          <div class="entry-date">${dateDisplay}</div>
+          ${e.time ? `<div class="entry-time">⏰ ${e.time}</div>` : ''}
+        </div>
+        <span class="status-badge ${badgeCls}">${badgeText}</span>
+      </div>
+      ${chips ? `<div class="entry-details">${chips}</div>` : ''}
+      ${e.obs ? `<div class="entry-obs">💬 ${e.obs}</div>` : ''}
+    `;
+    list.appendChild(card);
+  });
+}
+
+// ---- Stats ----
+function renderStats() {
+  const total = entries.length;
+  const defec = entries.filter(e => e.defecation === 'da' || e.defecation === 'partial').length;
+  const blood = entries.filter(e => e.blood).length;
+  const rate = total ? Math.round(defec/total*100) : 0;
+
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-defec').textContent = rate + '%';
+  document.getElementById('s-blood').textContent = blood;
+
+  const consistencyMap = {};
+  entries.forEach(e => { if(e.consistency) consistencyMap[e.consistency] = (consistencyMap[e.consistency]||0)+1; });
+
+  let html = '';
+  if (total === 0) { html = 'Nicio înregistrare încă.'; }
+  else {
+    const noDefec = entries.filter(e => e.defecation === 'nu').length;
+    const concerns = entries.filter(e => e.blood || e.color === 'negru' || e.consistency === 'lichid' || e.behavior === 'tipete').length;
+    html += `<p>📅 <strong>Total zile înregistrate:</strong> ${total}</p>`;
+    html += `<p>✅ <strong>Defecații normale:</strong> ${defec} (${rate}%)</p>`;
+    if (noDefec > 0) html += `<p>❌ <strong>Zile fără defecație:</strong> ${noDefec}</p>`;
+    if (blood > 0) html += `<p>🩸 <strong>Episoade cu sânge:</strong> ${blood}</p>`;
+    if (concerns > 0) html += `<p>⚠️ <strong>Înregistrări îngrijorătoare:</strong> ${concerns}</p>`;
+    const topC = Object.entries(consistencyMap).sort((a,b) => b[1]-a[1])[0];
+    if (topC) html += `<p>🧱 <strong>Consistență predominantă:</strong> ${topC[0]}</p>`;
+    const ago7 = new Date(); ago7.setDate(ago7.getDate()-7);
+    const last7 = entries.filter(e => new Date(e.date) >= ago7);
+    if (last7.length) {
+      const l7def = last7.filter(e => e.defecation === 'da' || e.defecation === 'partial').length;
+      html += `<br><p>🗓️ <strong>Ultimele 7 zile:</strong> ${last7.length} înreg., ${l7def} defecații</p>`;
+    }
+  }
+  document.getElementById('stats-content').innerHTML = html;
+}
+
+// ---- Export ----
+window.exportCSV = function() {
+  if (!entries.length) { showToast('Nicio dată de exportat', false); return; }
+  const headers = ['Data','Ora','Defecatie','Consistenta','Culoare','Miros','Cantitate','Sange','Tip_sange','Comportament','Observatii'];
+  const rows = entries.map(e => [
+    e.date, e.time||'', e.defecation, e.consistency||'', e.color||'',
+    e.smell||'', e.amount||'', e.blood?'da':'nu', e.blood_type||'', e.behavior||'', e.obs||''
+  ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
+  download('jurnal-oscar.csv', 'text/csv', [headers.join(','), ...rows].join('\n'));
+  showToast('CSV descărcat!', true);
+};
+
+window.exportText = function() {
+  if (!entries.length) { showToast('Nicio dată de exportat', false); return; }
+  const txt = entries.map(e => {
+    let s = `DATA: ${e.date}${e.time ? ' ora '+e.time : ''}\n`;
+    s += `DEFECAȚIE: ${e.defecation}\n`;
+    if (e.consistency) s += `CONSISTENȚĂ: ${e.consistency}\n`;
+    if (e.color) s += `CULOARE: ${e.color}\n`;
+    if (e.smell) s += `MIROS: ${e.smell}\n`;
+    if (e.blood) s += `SÂNGE: da${e.blood_type ? ' ('+e.blood_type+')' : ''}\n`;
+    if (e.behavior) s += `COMPORTAMENT: ${e.behavior}\n`;
+    if (e.obs) s += `OBSERVAȚII: ${e.obs}\n`;
+    return s;
+  }).join('\n---\n\n');
+  download('jurnal-oscar.txt', 'text/plain', txt);
+  showToast('Fișier text descărcat!', true);
+};
+
+function download(filename, type, content) {
+  const blob = new Blob([content], {type});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+
+// ---- UI helpers (global) ----
+window.selectPill = function(el) {
+  const group = el.dataset.group;
+  document.querySelectorAll(`[data-group="${group}"]`).forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+  selections[group] = el.dataset.val;
+};
+
+window.toggleBlood = function() {
+  bloodOn = !bloodOn;
+  document.getElementById('blood-toggle').classList.toggle('on', bloodOn);
+  document.getElementById('blood-label').textContent = bloodOn ? 'DA — sânge vizibil' : 'Nu';
+  document.getElementById('blood-detail-field').style.display = bloodOn ? 'block' : 'none';
+};
+
+window.switchTab = function(name, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'journal' || name === 'stats') loadEntries();
+};
+
+window.setFilter = function(f, btn) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderEntries();
+};
+
+function showToast(msg, ok=true) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = ok ? 'var(--ok)' : 'var(--warn)';
+  t.style.color = ok ? '#0f1a0f' : '#fff';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
